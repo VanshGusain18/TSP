@@ -89,7 +89,7 @@ def get_path(metric, start, goal):
 
 @app.route('/')
 def root():
-    return '<p>hello there hehe</p>'
+    return '<p>hello there!</p>'
 
 if __name__ == '__main__':
     app.run(debug=True)
