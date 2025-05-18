@@ -25,7 +25,7 @@ class Edge(db.Model):
     time = db.Column(db.Float, nullable=False)
     fuel = db.Column(db.Float, nullable=False)
 
-# Graph loader with all weights
+# Graph loader
 def build_graph():
     graph = {}
     edges = Edge.query.all()
@@ -35,7 +35,7 @@ def build_graph():
         graph[edge.from_node].append((edge.to_node, edge.distance, edge.time, edge.fuel))
     return graph
 
-# Haversine heuristic
+# Haversine heuristic (always distance-based)
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1 
@@ -47,32 +47,45 @@ def haversine(lat1, lon1, lat2, lon2):
 def heuristic(node, goal):
     n1 = Node.query.filter_by(name=node).first()
     n2 = Node.query.filter_by(name=goal).first()
+    # Always return distance heuristic regardless of metric
     return haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude) if n1 and n2 else float('inf')
 
-# A* algorithm tracking all weights
+# A* algorithm: cost metric calculation fixed to always use distance for pathfinding cost
 def a_star_algorithm(graph, start, goal, metric):
     open_set = []
-    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start], 0, 0, 0))  # f, g, node, path, dist, time, fuel
+    # f, g_cost (cost_so_far), current_node, path, total_dist, total_time, total_fuel
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start], 0, 0, 0))
     visited = set()
 
     while open_set:
-        f, g, current, path, total_dist, total_time, total_fuel = heapq.heappop(open_set)
+        f, g_cost, current, path, total_dist, total_time, total_fuel = heapq.heappop(open_set)
+
         if current == goal:
             return path, total_dist, total_time, total_fuel
+
         if current in visited:
             continue
         visited.add(current)
+
         for neighbor, dist, time_, fuel in graph.get(current, []):
             if neighbor not in visited:
+                # FIX: Always use distance as cost for comparison
+                new_g_cost = g_cost + dist  # cost metric is always distance
+                
                 new_dist = total_dist + dist
                 new_time = total_time + time_
                 new_fuel = total_fuel + fuel
-                new_g = {'distance': new_dist, 'time': new_time, 'fuel': new_fuel}[metric]
-                new_f = new_g + heuristic(neighbor, goal)
-                heapq.heappush(open_set, (new_f, new_g, neighbor, path + [neighbor], new_dist, new_time, new_fuel))
+                
+                new_f = new_g_cost + heuristic(neighbor, goal)
+                heapq.heappush(open_set, (
+                    new_f, new_g_cost, neighbor,
+                    path + [neighbor],
+                    new_dist, new_time, new_fuel
+                ))
+
     return None, 0, 0, 0
 
-# API to get path with all weights
+# API route
 @app.route('/path/<string:metric>/<string:start>/<string:goal>')
 def get_path(metric, start, goal):
     if metric not in ['distance', 'time', 'fuel']:

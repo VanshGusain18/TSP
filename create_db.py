@@ -30,7 +30,7 @@ def haversine(lat1, lon1, lat2, lon2):
     dlon = lon2 - lon1
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     c = 2 * asin(sqrt(a))
-    return 6371 * c 
+    return 6371 * c
 
 with app.app_context():
     db.drop_all()
@@ -46,8 +46,8 @@ with app.app_context():
         n2 = Node.query.filter_by(name=to_n).first()
         if n1 and n2:
             dist = round(haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude), 2)
-            time = round(dist / 40, 2)       
-            fuel = round(dist * 0.1, 2)      
+            time = round(dist / 40, 2)       # assuming 40 km/h
+            fuel = round(dist * 0.1, 2)      # assuming 10 km/l fuel consumption
             db.session.add(Edge(from_node=from_n, to_node=to_n, distance=dist, time=time, fuel=fuel))
             db.session.add(Edge(from_node=to_n, to_node=from_n, distance=dist, time=time, fuel=fuel))
 
