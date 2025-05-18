@@ -22,20 +22,40 @@ class Edge(db.Model):
     from_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
     to_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
     distance = db.Column(db.Float, nullable=False)
-    time = db.Column(db.Float, nullable=False)
-    fuel = db.Column(db.Float, nullable=False)
+    road_type = db.Column(db.String(20), nullable=False)  # 'highway', 'street', etc.
 
-# Graph loader
+# Road type characteristics
+road_speeds = {
+    'highway': 100,  # km/h
+    'street': 30,    # km/h
+    'rural': 50,     # km/h (example)
+}
+
+road_fuel_rates = {
+    'highway': 0.05,  # liters per km (more efficient)
+    'street': 0.1,    # liters per km (less efficient)
+    'rural': 0.07,
+}
+
+def compute_time_and_fuel(distance, road_type):
+    speed = road_speeds.get(road_type, 40)       # default speed
+    fuel_rate = road_fuel_rates.get(road_type, 0.08)  # default fuel rate
+    time = distance / speed
+    fuel = distance * fuel_rate
+    return time, fuel
+
+# Graph loader with dynamic time and fuel calculation
 def build_graph():
     graph = {}
     edges = Edge.query.all()
     for edge in edges:
+        time, fuel = compute_time_and_fuel(edge.distance, edge.road_type)
         if edge.from_node not in graph:
             graph[edge.from_node] = []
-        graph[edge.from_node].append((edge.to_node, edge.distance, edge.time, edge.fuel))
+        graph[edge.from_node].append((edge.to_node, edge.distance, time, fuel))
     return graph
 
-# Haversine heuristic (always distance-based)
+# Haversine function
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1 
@@ -44,17 +64,27 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * asin(sqrt(a)) 
     return 6371 * c
 
-def heuristic(node, goal):
+# Heuristic considering metric
+def heuristic(node, goal, metric):
     n1 = Node.query.filter_by(name=node).first()
     n2 = Node.query.filter_by(name=goal).first()
-    # Always return distance heuristic regardless of metric
-    return haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude) if n1 and n2 else float('inf')
+    if not n1 or not n2:
+        return float('inf')
+    dist = haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude)
+    if metric == 'distance':
+        return dist
+    elif metric == 'time':
+        max_speed = max(road_speeds.values())
+        return dist / max_speed
+    elif metric == 'fuel':
+        min_fuel_rate = min(road_fuel_rates.values())
+        return dist * min_fuel_rate
 
-# A* algorithm: cost metric calculation fixed to always use distance for pathfinding cost
+# A* algorithm that considers selected metric for path cost and heuristic
 def a_star_algorithm(graph, start, goal, metric):
     open_set = []
-    # f, g_cost (cost_so_far), current_node, path, total_dist, total_time, total_fuel
-    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start], 0, 0, 0))
+    # f, g_cost, current_node, path, total_dist, total_time, total_fuel
+    heapq.heappush(open_set, (heuristic(start, goal, metric), 0, start, [start], 0, 0, 0))
     visited = set()
 
     while open_set:
@@ -69,14 +99,18 @@ def a_star_algorithm(graph, start, goal, metric):
 
         for neighbor, dist, time_, fuel in graph.get(current, []):
             if neighbor not in visited:
-                # FIX: Always use distance as cost for comparison
-                new_g_cost = g_cost + dist  # cost metric is always distance
-                
+                if metric == 'distance':
+                    cost = dist
+                elif metric == 'time':
+                    cost = time_
+                else:  # fuel
+                    cost = fuel
+
+                new_g_cost = g_cost + cost
                 new_dist = total_dist + dist
                 new_time = total_time + time_
                 new_fuel = total_fuel + fuel
-                
-                new_f = new_g_cost + heuristic(neighbor, goal)
+                new_f = new_g_cost + heuristic(neighbor, goal, metric)
                 heapq.heappush(open_set, (
                     new_f, new_g_cost, neighbor,
                     path + [neighbor],
