@@ -25,15 +25,14 @@ class Edge(db.Model):
     time = db.Column(db.Float, nullable=False)
     fuel = db.Column(db.Float, nullable=False)
 
-# Graph loader
-def build_graph(metric):
+# Graph loader with all weights
+def build_graph():
     graph = {}
     edges = Edge.query.all()
     for edge in edges:
-        weight = getattr(edge, metric)
         if edge.from_node not in graph:
             graph[edge.from_node] = []
-        graph[edge.from_node].append((edge.to_node, weight))
+        graph[edge.from_node].append((edge.to_node, edge.distance, edge.time, edge.fuel))
     return graph
 
 # Haversine heuristic
@@ -50,42 +49,47 @@ def heuristic(node, goal):
     n2 = Node.query.filter_by(name=goal).first()
     return haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude) if n1 and n2 else float('inf')
 
-# A* algorithm
+# A* algorithm tracking all weights
 def a_star_algorithm(graph, start, goal, metric):
     open_set = []
-    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start]))
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start], 0, 0, 0))  # f, g, node, path, dist, time, fuel
     visited = set()
 
     while open_set:
-        f, g, current, path = heapq.heappop(open_set)
+        f, g, current, path, total_dist, total_time, total_fuel = heapq.heappop(open_set)
         if current == goal:
-            return path, g
+            return path, total_dist, total_time, total_fuel
         if current in visited:
             continue
         visited.add(current)
-        for neighbor, weight in graph.get(current, []):
+        for neighbor, dist, time_, fuel in graph.get(current, []):
             if neighbor not in visited:
-                new_g = g + weight
+                new_dist = total_dist + dist
+                new_time = total_time + time_
+                new_fuel = total_fuel + fuel
+                new_g = {'distance': new_dist, 'time': new_time, 'fuel': new_fuel}[metric]
                 new_f = new_g + heuristic(neighbor, goal)
-                heapq.heappush(open_set, (new_f, new_g, neighbor, path + [neighbor]))
-    return None, float('inf')
+                heapq.heappush(open_set, (new_f, new_g, neighbor, path + [neighbor], new_dist, new_time, new_fuel))
+    return None, 0, 0, 0
 
-# APIs
+# API to get path with all weights
 @app.route('/path/<string:metric>/<string:start>/<string:goal>')
 def get_path(metric, start, goal):
     if metric not in ['distance', 'time', 'fuel']:
         return jsonify({'error': 'Invalid metric'}), 400
 
-    graph = build_graph(metric)
-    path, cost = a_star_algorithm(graph, start, goal, metric)
+    graph = build_graph()
+    path, total_dist, total_time, total_fuel = a_star_algorithm(graph, start, goal, metric)
 
     if path:
-        unit = {'distance': 'km', 'time': 'hours', 'fuel': 'liters'}[metric]
         response = OrderedDict()
         response['path'] = path
-        response[metric] = f"{round(cost, 2)} {unit}"
+        response['distance'] = f"{round(total_dist, 2)} km"
+        response['time'] = f"{round(total_time, 2)} hours"
+        response['fuel'] = f"{round(total_fuel, 2)} liters"
         return jsonify(response)
-
+    else:
+        return jsonify({'error': 'No path found'}), 404
 
 @app.route('/')
 def root():
