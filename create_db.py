@@ -6,7 +6,6 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
 
-# Models
 class Node(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(1), unique=True, nullable=False)
@@ -20,7 +19,6 @@ class Edge(db.Model):
     distance = db.Column(db.Float, nullable=False)
     road_type = db.Column(db.String(20), nullable=False)  # e.g., 'highway', 'street'
 
-# Coordinates for nodes
 coordinates = {
     'A': (28.6139, 77.2090),
     'B': (28.7041, 77.1025),
@@ -34,7 +32,6 @@ coordinates = {
     'J': (28.4089, 77.3178)
 }
 
-# Edges between nodes with road types
 edges = [
     ('A', 'B', 'street'), 
     ('A', 'C', 'highway'),
@@ -52,7 +49,6 @@ edges = [
     ('H', 'J', 'street')
 ]
 
-# Haversine distance calculator
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
@@ -62,17 +58,14 @@ def haversine(lat1, lon1, lat2, lon2):
     return 6371 * c  # km
 
 with app.app_context():
-    # Drop and recreate tables
     db.drop_all()
     db.create_all()
 
-    # Add nodes
     for name, (lat, lon) in coordinates.items():
         db.session.add(Node(name=name, latitude=lat, longitude=lon))
 
     db.session.commit()
 
-    # Add edges with computed distances
     for from_n, to_n, road_type in edges:
         n1 = Node.query.filter_by(name=from_n).first()
         n2 = Node.query.filter_by(name=to_n).first()

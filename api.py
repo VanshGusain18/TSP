@@ -1,6 +1,6 @@
 import heapq
 from math import radians, cos, sin, asin, sqrt
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from collections import OrderedDict
@@ -24,27 +24,25 @@ class Edge(db.Model):
     distance = db.Column(db.Float, nullable=False)
     road_type = db.Column(db.String(20), nullable=False)  # 'highway', 'street', etc.
 
-# Road type characteristics
 road_speeds = {
-    'highway': 100,  # km/h
-    'street': 30,    # km/h
-    'rural': 50,     # km/h (example)
+    'highway': 100,  
+    'street': 30,    
+    'rural': 50,     
 }
 
 road_fuel_rates = {
-    'highway': 0.05,  # liters per km (more efficient)
-    'street': 0.1,    # liters per km (less efficient)
+    'highway': 0.05,  
+    'street': 0.1,    
     'rural': 0.07,
 }
 
 def compute_time_and_fuel(distance, road_type):
-    speed = road_speeds.get(road_type, 40)       # default speed
-    fuel_rate = road_fuel_rates.get(road_type, 0.08)  # default fuel rate
+    speed = road_speeds.get(road_type, 40)       
+    fuel_rate = road_fuel_rates.get(road_type, 0.08)  
     time = distance / speed
     fuel = distance * fuel_rate
     return time, fuel
 
-# Graph loader with dynamic time and fuel calculation
 def build_graph():
     graph = {}
     edges = Edge.query.all()
@@ -55,7 +53,6 @@ def build_graph():
         graph[edge.from_node].append((edge.to_node, edge.distance, time, fuel))
     return graph
 
-# Haversine function
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1 
@@ -64,7 +61,6 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * asin(sqrt(a)) 
     return 6371 * c
 
-# Heuristic considering metric
 def heuristic(node, goal, metric):
     n1 = Node.query.filter_by(name=node).first()
     n2 = Node.query.filter_by(name=goal).first()
@@ -80,10 +76,8 @@ def heuristic(node, goal, metric):
         min_fuel_rate = min(road_fuel_rates.values())
         return dist * min_fuel_rate
 
-# A* algorithm that considers selected metric for path cost and heuristic
 def a_star_algorithm(graph, start, goal, metric):
     open_set = []
-    # f, g_cost, current_node, path, total_dist, total_time, total_fuel
     heapq.heappush(open_set, (heuristic(start, goal, metric), 0, start, [start], 0, 0, 0))
     visited = set()
 
@@ -137,10 +131,27 @@ def get_path(metric, start, goal):
         return jsonify(response)
     else:
         return jsonify({'error': 'No path found'}), 404
+    
+@app.route('/get-graph')
+def get_graph():
+    nodes = Node.query.all()
+    edges = Edge.query.all()
+
+    node_index_map = {node.name: idx for idx, node in enumerate(nodes)}
+
+    nodes_data = [{'x': node.longitude, 'y': node.latitude} for node in nodes]
+
+    edges_data = []
+    for edge in edges:
+        if edge.from_node in node_index_map and edge.to_node in node_index_map:
+            edges_data.append([node_index_map[edge.from_node], node_index_map[edge.to_node]])
+
+    return jsonify({'nodes': nodes_data, 'edges': edges_data})
+
 
 @app.route('/')
-def root():
-    return '<p>hello there!</p>'
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
