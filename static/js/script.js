@@ -4,9 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let nodes = [];
   let edges = [];
-  let nodeCoords = []; // screen coords
+  let nodeCoords = [];
 
-  // Transform lat/lon to canvas coordinates
   function scaleCoordinates(rawNodes) {
     const lats = rawNodes.map((n) => n.y);
     const lons = rawNodes.map((n) => n.x);
@@ -22,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return rawNodes.map((n) => {
       return {
         x: padding + ((n.x - minLon) / (maxLon - minLon)) * width,
-        y: padding + ((maxLat - n.y) / (maxLat - minLat)) * height, // flip y
+        y: padding + ((maxLat - n.y) / (maxLat - minLat)) * height,
       };
     });
   }
@@ -34,30 +33,53 @@ document.addEventListener("DOMContentLoaded", () => {
     edges.forEach(([fromIdx, toIdx]) => {
       const from = nodeCoords[fromIdx];
       const to = nodeCoords[toIdx];
+
       const isInPath =
         path.includes(fromIdx) &&
         path.includes(toIdx) &&
         Math.abs(path.indexOf(fromIdx) - path.indexOf(toIdx)) === 1;
-      ctx.strokeStyle = isInPath ? "red" : "#999";
-      ctx.lineWidth = isInPath ? 3 : 1;
+
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
+
+      if (isInPath) {
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "rgba(239, 68, 68, 0.7)";
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.strokeStyle = "#d1d5db";
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = 0;
+      }
+
       ctx.stroke();
     });
 
-    // Draw nodes
     nodeCoords.forEach((node, idx) => {
       ctx.beginPath();
       ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI);
-      ctx.fillStyle = path.includes(idx) ? "#007bff" : "#333";
+
+      if (path.includes(idx)) {
+        ctx.fillStyle = "#3b82f6";
+        ctx.shadowColor = "rgba(59, 130, 246, 0.5)";
+        ctx.shadowBlur = 6;
+      } else {
+        ctx.fillStyle = "#1f2937";
+        ctx.shadowBlur = 0;
+      }
+
       ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.font = "12px Arial";
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String.fromCharCode(65 + idx), node.x, node.y);
     });
+
+    ctx.shadowBlur = 0;
   }
 
   fetch("/get-graph")
@@ -68,7 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
       nodeCoords = scaleCoordinates(nodes);
       drawGraph();
 
-      // populate selects (replace old logic)
       const nodeNames = nodes.map((_, i) => String.fromCharCode(65 + i));
       const startSelect = document.getElementById("start");
       const goalSelect = document.getElementById("goal");
@@ -81,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-  // Hook to form submission
   document.getElementById("routeForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const start = document.getElementById("start").value;
@@ -101,15 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         if (data.error) {
           resultDiv.textContent = `Error: ${data.error}`;
-          drawGraph(); // reset graph
+          drawGraph(); // Reset
         } else {
           resultDiv.innerHTML =
-            `<strong>Path:</strong> ${data.path.join(" → ")}\n` +
-            `<strong>Distance:</strong> ${data.distance}\n` +
-            `<strong>Time:</strong> ${data.time}\n` +
+            `<strong>Path:</strong> ${data.path.join(" → ")}<br>` +
+            `<strong>Distance:</strong> ${data.distance}<br>` +
+            `<strong>Time:</strong> ${data.time}<br>` +
             `<strong>Fuel:</strong> ${data.fuel}`;
 
-          // Convert path from node letters to indices (A -> 0, B -> 1, ...)
           const pathIndices = data.path.map((ch) => ch.charCodeAt(0) - 65);
           drawGraph(pathIndices);
         }

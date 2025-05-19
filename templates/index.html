@@ -10,33 +10,34 @@
     />
   </head>
   <body>
-    <div class="container">
-      <h1>Route Finder</h1>
-      <form id="routeForm">
-        <label for="start">Start Node:</label>
-        <select id="start" name="start"></select>
+    <div class="layout">
+      <div class="container">
+        <h1>Route Finder</h1>
+        <form id="routeForm">
+          <label for="start">Start Node:</label>
+          <select id="start" name="start"></select>
 
-        <label for="goal">Goal Node:</label>
-        <select id="goal" name="goal"></select>
+          <label for="goal">Goal Node:</label>
+          <select id="goal" name="goal"></select>
 
-        <label for="metric">Optimization Metric:</label>
-        <select id="metric" name="metric">
-          <option value="distance">Distance</option>
-          <option value="time">Time</option>
-          <option value="fuel">Fuel</option>
-        </select>
+          <label for="metric">Optimization Metric:</label>
+          <select id="metric" name="metric">
+            <option value="distance">Distance</option>
+            <option value="time">Time</option>
+            <option value="fuel">Fuel</option>
+          </select>
 
-        <button type="submit">Find Path</button>
-      </form>
+          <button type="submit">Find Path</button>
+        </form>
 
-      <div id="result" class="result"></div>
+        <div id="result" class="result"></div>
+      </div>
+
+      <div class="graph-container">
+        <canvas id="graphCanvas" width="600" height="400"></canvas>
+      </div>
     </div>
-    <canvas
-      id="graphCanvas"
-      width="600"
-      height="400"
-      style="border: 1px solid #ccc"
-    ></canvas>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   </body>
 </html>
