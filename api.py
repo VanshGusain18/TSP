@@ -36,7 +36,6 @@ road_speeds = {
     'dirt_road': 10,
 }
 
-# Base fuel rates at optimal speed (liters/km)
 base_fuel_rates = {
     'highway': 0.05,
     'street': 0.10,
@@ -48,7 +47,6 @@ base_fuel_rates = {
     'dirt_road': 0.18,
 }
 
-# Optimal speeds for minimal fuel consumption (km/h)
 optimal_speeds = {
     'highway': 90,
     'street': 30,
@@ -60,7 +58,6 @@ optimal_speeds = {
     'dirt_road': 10,
 }
 
-# Penalty coefficient for deviation from optimal speed
 penalty_coefficient = 0.0005
 
 def compute_fuel_rate(speed, road_type):
@@ -146,7 +143,6 @@ def a_star_algorithm(graph, start, goal, metric):
 
     return None, 0, 0, 0
 
-# API route
 @app.route('/path/<string:metric>/<string:start>/<string:goal>')
 def get_path(metric, start, goal):
     if metric not in ['distance', 'time', 'fuel']:

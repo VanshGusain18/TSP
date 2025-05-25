@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.shadowColor = "rgba(239, 68, 68, 0.7)";
         ctx.shadowBlur = 10;
       } else {
-        ctx.strokeStyle = "rgba(209, 213, 219, 0.4)"; // lighter opacity for edges
+        ctx.strokeStyle = "rgba(209, 213, 219, 0.4)";
         ctx.lineWidth = 1.5;
         ctx.shadowBlur = 0;
       }
@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       ctx.fill();
 
-      // Show initials, max 2 letters, centered
       ctx.fillStyle = "#ffffff";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
@@ -127,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         if (data.error) {
           resultDiv.textContent = `Error: ${data.error}`;
-          drawGraph(); // Reset
+          drawGraph();
         } else {
           resultDiv.innerHTML =
             `<strong>Path:</strong> ${data.path.join(" → ")}<br>` +

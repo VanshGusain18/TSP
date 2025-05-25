@@ -26,13 +26,12 @@ def haversine(lat1, lon1, lat2, lon2):
     dlon = lon2 - lon1
     a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
     c = 2 * asin(sqrt(a))
-    return 6371 * c  # distance in km
+    return 6371 * c  
 
 with app.app_context():
     db.drop_all()
     db.create_all()
 
-    # Load nodes from CSV
     with open('nodes.csv', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -42,7 +41,6 @@ with app.app_context():
             db.session.add(Node(name=name, latitude=lat, longitude=lon))
         db.session.commit()
 
-    # Load edges from CSV
     with open('edges.csv', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -57,10 +55,8 @@ with app.app_context():
                 dist = round(haversine(from_node.latitude, from_node.longitude,
                                     to_node.latitude, to_node.longitude), 2)
                 
-                # Add edge from A to B
                 db.session.add(Edge(from_node=from_name, to_node=to_name,
                                     distance=dist, road_type=road_type))
-                # Add edge from B to A (reverse)
                 db.session.add(Edge(from_node=to_name, to_node=from_name,
                                     distance=dist, road_type=road_type))
         db.session.commit()
