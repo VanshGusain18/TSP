@@ -1,3 +1,4 @@
+/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -11,8 +12,11 @@ body {
   padding: 40px;
   display: flex;
   justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
+/* Layout wrapper for form and graph */
 .layout {
   display: flex;
   flex-wrap: wrap;
@@ -20,40 +24,58 @@ body {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
+  max-width: 1300px; /* limit max width */
 }
 
+/* Form container */
 .container {
   background: #ffffff;
   padding: 36px;
   border-radius: 16px;
   width: 360px;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 h1 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   text-align: center;
   margin-bottom: 30px;
+  color: #2563eb;
 }
 
+/* Form labels and selects */
 label {
   display: block;
   margin-top: 18px;
   margin-bottom: 8px;
   font-weight: 600;
   font-size: 14px;
+  color: #374151;
 }
 
-select {
+select,
+input[type="text"] {
   width: 100%;
   padding: 12px;
   font-size: 15px;
   border-radius: 10px;
   border: 1px solid #d1d5db;
   background-color: #f9fafb;
+  transition: border-color 0.2s ease;
 }
 
+select:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #fff;
+}
+
+/* Buttons */
 button {
   margin-top: 28px;
   width: 100%;
@@ -65,39 +87,58 @@ button {
   border: none;
   border-radius: 12px;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transition: background 0.3s ease;
 }
 
+button:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
+/* Result box */
 .result {
   margin-top: 30px;
-  padding: 16px;
+  padding: 20px;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
   border-radius: 10px;
   color: #065f46;
-  font-size: 14px;
+  font-size: 15px;
   white-space: pre-line;
+  box-shadow: inset 0 0 8px rgba(6, 95, 70, 0.1);
 }
 
+/* Graph container */
 .graph-container {
   background: #f1f5f9;
-  padding: 24px;
+  padding: 24px 30px;
   border-radius: 16px;
   flex-grow: 1;
   flex-basis: 60%;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.04);
   min-width: 600px;
+  max-width: 900px;
+  position: relative;
+  user-select: none;
 }
 
+/* Canvas styling */
 canvas#graphCanvas {
-  width: 100%;
-  height: auto;
-  max-height: 600px;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 700px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   background-color: #ffffff;
   display: block;
+  image-rendering: optimizeSpeed; /* smooth edges */
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  padding: 10px;
 }
 
+/* Responsive adjustments */
 @media (max-width: 1000px) {
   .layout {
     flex-direction: column;
@@ -108,5 +149,9 @@ canvas#graphCanvas {
   .graph-container {
     width: 100%;
     max-width: 700px;
+  }
+
+  .graph-container {
+    min-width: unset;
   }
 }

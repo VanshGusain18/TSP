@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.shadowColor = "rgba(239, 68, 68, 0.7)";
         ctx.shadowBlur = 10;
       } else {
-        ctx.strokeStyle = "#d1d5db";
+        ctx.strokeStyle = "rgba(209, 213, 219, 0.4)"; // lighter opacity for edges
         ctx.lineWidth = 1.5;
         ctx.shadowBlur = 0;
       }
@@ -58,7 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     nodeCoords.forEach((node, idx) => {
       ctx.beginPath();
-      ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI);
+      const radius = path.includes(idx) ? 12 : 10;
+      ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
 
       if (path.includes(idx)) {
         ctx.fillStyle = "#3b82f6";
@@ -71,11 +72,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       ctx.fill();
 
+      // Show initials, max 2 letters, centered
       ctx.fillStyle = "#ffffff";
-      ctx.font = "10px sans-serif";
+      ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(nodes[idx].name.slice(0, 10), node.x, node.y); // optional trim
+      const initials = nodes[idx].name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+      ctx.fillText(initials, node.x, node.y);
     });
 
     ctx.shadowBlur = 0;
