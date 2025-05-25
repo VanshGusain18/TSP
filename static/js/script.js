@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function drawGraph(path = []) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw edges
     edges.forEach(([fromIdx, toIdx]) => {
       const from = nodeCoords[fromIdx];
       const to = nodeCoords[toIdx];
@@ -73,10 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.fill();
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "12px sans-serif";
+      ctx.font = "10px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String.fromCharCode(65 + idx), node.x, node.y);
+      ctx.fillText(nodes[idx].name.slice(0, 10), node.x, node.y); // optional trim
     });
 
     ctx.shadowBlur = 0;
@@ -90,13 +89,12 @@ document.addEventListener("DOMContentLoaded", () => {
       nodeCoords = scaleCoordinates(nodes);
       drawGraph();
 
-      const nodeNames = nodes.map((_, i) => String.fromCharCode(65 + i));
       const startSelect = document.getElementById("start");
       const goalSelect = document.getElementById("goal");
 
-      nodeNames.forEach((name) => {
-        const opt1 = new Option(name, name);
-        const opt2 = new Option(name, name);
+      nodes.forEach((node) => {
+        const opt1 = new Option(node.name, node.name);
+        const opt2 = new Option(node.name, node.name);
         startSelect.add(opt1);
         goalSelect.add(opt2);
       });
@@ -129,7 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
             `<strong>Time:</strong> ${data.time}<br>` +
             `<strong>Fuel:</strong> ${data.fuel}`;
 
-          const pathIndices = data.path.map((ch) => ch.charCodeAt(0) - 65);
+          const pathIndices = data.path.map((name) =>
+            nodes.findIndex((n) => n.name === name)
+          );
           drawGraph(pathIndices);
         }
       })

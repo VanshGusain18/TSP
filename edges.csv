@@ -1,0 +1,87 @@
+from,to,road_type
+Nehru Marg,Tapkeshwar Mandir,dirt_road
+Centrio Mall,Kalidas Road,mountain
+Panditwadi,Raipur Road,mountain
+Kaulagarh,Raipur Road,dirt_road
+Doon Valley Hospital,Tireman Road,city_traffic
+Kotra,Nehru Marg,street
+Kalidas Road,Pitthuwala Tarla,street
+Raipur Road,Saharanpur Road,city_traffic
+Kendriya Vidyalaya Birpur,Nehru Marg,city_traffic
+Kaulagarh,Takle Road,mountain
+Laxmi Road,Shimla Bypass Road,rural
+Nakatpur,Panditwadi,offroad
+Panditwadi,RIMC Football Ground,expressway
+Doon Valley Hospital,Pitthuwala Tarla,offroad
+Laxmi Road,Nakatpur,rural
+Aryaman Fort Road,Ogalwala,highway
+Laxmi Road,Tireman Road,offroad
+Saharanpur Road,Tireman Road,mountain
+Laxmi Road,Rajpur-Mussoorie Road,highway
+Bhurgaon,Maru Sidhi,highway
+Centrio Mall,Sahastradhara,street
+Ogalwala,Tapkeshwar Mandir,highway
+Nakatpur,Tapkeshwar Mandir,dirt_road
+Maru Sidhi,Nehru Marg,expressway
+ISBT Road,Saharanpur Road,offroad
+Saharanpur Road,Tuntawala,offroad
+Bhurgaon,Treebo Premium Hotel Pearl Avenue,rural
+Shimla Bypass Road,Tuntawala,mountain
+Centrio Mall,Nakatpur,offroad
+Aryaman Fort Road,Nakatpur,city_traffic
+Centrio Mall,Tireman Road,dirt_road
+Aryaman Fort Road,Tireman Road,rural
+Kotra,Maru Sidhi,street
+Pitthuwala Tarla,Vijay Path,street
+Kotra,Vijay Path,dirt_road
+Aryaman Fort Road,Nehru Marg,street
+Centrio Mall,Kewal Vihar,rural
+Kewal Vihar,Tuntawala,city_traffic
+ISBT Road,Kotra,highway
+Shimla Bypass Road,Takle Road,dirt_road
+Bhurgaon,Masandawala,highway
+Pitthuwala Tarla,Raipur Road,mountain
+Maru Sidhi,Nakatpur,city_traffic
+ISBT Road,Sahastradhara,city_traffic
+Ogalwala,Sahastradhara,rural
+Takle Road,Treebo Premium Hotel Pearl Avenue,expressway
+Bhurgaon,Laxmi Road,dirt_road
+Kotra,Takle Road,dirt_road
+Maru Sidhi,Vijay Path,mountain
+Rajpur-Mussoorie Road,Tuntawala,city_traffic
+Kalidas Road,Kaulagarh,mountain
+Laxmi Road,Raipur Road,expressway
+Maru Sidhi,Tuntawala,city_traffic
+Laxmi Road,Saharanpur Road,offroad
+Kendriya Vidyalaya Birpur,Takle Road,highway
+Rajpur-Mussoorie Road,Treebo Premium Hotel Pearl Avenue,offroad
+Kalidas Road,Maru Sidhi,mountain
+Kaulagarh,Shimla Bypass Road,expressway
+Tireman Road,Vijay Path,city_traffic
+Kaulagarh,Nakatpur,city_traffic
+Masandawala,Raipur Road,dirt_road
+Nehru Marg,Rajpur-Mussoorie Road,street
+Kalidas Road,Saharanpur Road,offroad
+Maru Sidhi,Masandawala,dirt_road
+Takle Road,Tapkeshwar Mandir,mountain
+Kendriya Vidyalaya Birpur,Saharanpur Road,offroad
+Doon Valley Hospital,Kendriya Vidyalaya Birpur,city_traffic
+Saharanpur Road,Sahastradhara,rural
+Raipur Road,Treebo Premium Hotel Pearl Avenue,expressway
+Aryaman Fort Road,Takle Road,street
+ISBT Road,Shimla Bypass Road,street
+Kewal Vihar,Panditwadi,offroad
+Kewal Vihar,Masandawala,rural
+ISBT Road,Nakatpur,offroad
+Kendriya Vidyalaya Birpur,RIMC Football Ground,city_traffic
+Doon Valley Hospital,Kewal Vihar,offroad
+Kewal Vihar,Kotra,street
+Aryaman Fort Road,Panditwadi,dirt_road
+ISBT Road,Maru Sidhi,offroad
+Ogalwala,Vijay Path,city_traffic
+Kewal Vihar,Sahastradhara,dirt_road
+Rajpur-Mussoorie Road,Takle Road,mountain
+Maru Sidhi,RIMC Football Ground,city_traffic
+RIMC Football Ground,Sahastradhara,highway
+ISBT Road,Treebo Premium Hotel Pearl Avenue,mountain
+ISBT Road,Raipur Road,expressway

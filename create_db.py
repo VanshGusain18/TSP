@@ -1,3 +1,4 @@
+import csv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from math import radians, cos, sin, asin, sqrt
@@ -8,47 +9,16 @@ db = SQLAlchemy(app)
 
 class Node(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
 
 class Edge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    from_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
-    to_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
+    from_node = db.Column(db.String(100), db.ForeignKey('node.name'), nullable=False)
+    to_node = db.Column(db.String(100), db.ForeignKey('node.name'), nullable=False)
     distance = db.Column(db.Float, nullable=False)
-    road_type = db.Column(db.String(20), nullable=False)  # e.g., 'highway', 'street'
-
-coordinates = {
-    'A': (28.6139, 77.2090),   
-    'B': (28.7041, 77.1025),   
-    'C': (28.5355, 77.3910),  
-    'D': (28.4089, 77.3178),  
-    'E': (28.4595, 77.0266),  
-    'F': (28.9845, 77.7064),  
-    'G': (28.6692, 77.4538),  
-    'H': (28.9500, 77.7000),   
-    'I': (28.5900, 77.3300),   
-    'J': (28.8000, 77.3900),   
-}
-
-
-edges = [
-    ('A', 'B', 'street'), 
-    ('A', 'C', 'highway'),
-    ('B', 'C', 'street'), 
-    ('B', 'D', 'street'),
-    ('C', 'D', 'highway'), 
-    ('C', 'F', 'highway'),
-    ('D', 'E', 'street'), 
-    ('E', 'G', 'street'),
-    ('F', 'G', 'highway'), 
-    ('F', 'H', 'highway'),
-    ('G', 'I', 'street'), 
-    ('H', 'I', 'highway'),
-    ('I', 'J', 'street'), 
-    ('H', 'J', 'street')
-]
+    road_type = db.Column(db.String(20), nullable=False)
 
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
@@ -56,23 +26,44 @@ def haversine(lat1, lon1, lat2, lon2):
     dlon = lon2 - lon1
     a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
     c = 2 * asin(sqrt(a))
-    return 6371 * c  # km
+    return 6371 * c  # distance in km
 
 with app.app_context():
     db.drop_all()
     db.create_all()
 
-    for name, (lat, lon) in coordinates.items():
-        db.session.add(Node(name=name, latitude=lat, longitude=lon))
+    # Load nodes from CSV
+    with open('nodes.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            name = row['Place Name'].strip()
+            lat = float(row['Latitude'])
+            lon = float(row['Longitude'])
+            db.session.add(Node(name=name, latitude=lat, longitude=lon))
+        db.session.commit()
 
-    db.session.commit()
+    # Load edges from CSV
+    with open('edges.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            from_name = row['from'].strip()
+            to_name = row['to'].strip()
+            road_type = row['road_type'].strip()
 
-    for from_n, to_n, road_type in edges:
-        n1 = Node.query.filter_by(name=from_n).first()
-        n2 = Node.query.filter_by(name=to_n).first()
-        if n1 and n2:
-            dist = round(haversine(n1.latitude, n1.longitude, n2.latitude, n2.longitude), 2)
-            db.session.add(Edge(from_node=from_n, to_node=to_n, distance=dist, road_type=road_type))
+            from_node = Node.query.filter_by(name=from_name).first()
+            to_node = Node.query.filter_by(name=to_name).first()
 
-    db.session.commit()
-    print("Database initialized successfully!")
+            if from_node and to_node:
+                dist = round(haversine(from_node.latitude, from_node.longitude,
+                                    to_node.latitude, to_node.longitude), 2)
+                
+                # Add edge from A to B
+                db.session.add(Edge(from_node=from_name, to_node=to_name,
+                                    distance=dist, road_type=road_type))
+                # Add edge from B to A (reverse)
+                db.session.add(Edge(from_node=to_name, to_node=from_name,
+                                    distance=dist, road_type=road_type))
+        db.session.commit()
+
+
+    print("Database initialized from CSV files successfully!")

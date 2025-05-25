@@ -13,32 +13,65 @@ api = Api(app)
 # Models
 class Node(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)  
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
 
 class Edge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    from_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
-    to_node = db.Column(db.String(1), db.ForeignKey('node.name'), nullable=False)
+    from_node = db.Column(db.String(100), db.ForeignKey('node.name'), nullable=False)  
+    to_node = db.Column(db.String(100), db.ForeignKey('node.name'), nullable=False)    
     distance = db.Column(db.Float, nullable=False)
-    road_type = db.Column(db.String(20), nullable=False)  # 'highway', 'street', etc.
+    road_type = db.Column(db.String(20), nullable=False)
 
+# Speeds (km/h)
 road_speeds = {
-    'highway': 100,  
-    'street': 30,    
-    'rural': 50,     
+    'highway': 100,
+    'street': 30,
+    'rural': 50,
+    'mountain': 20,
+    'offroad': 15,
+    'expressway': 120,
+    'city_traffic': 20,
+    'dirt_road': 10,
 }
 
-road_fuel_rates = {
-    'highway': 0.05,  
-    'street': 0.1,    
+# Base fuel rates at optimal speed (liters/km)
+base_fuel_rates = {
+    'highway': 0.05,
+    'street': 0.10,
     'rural': 0.07,
+    'mountain': 0.12,
+    'offroad': 0.15,
+    'expressway': 0.04,
+    'city_traffic': 0.11,
+    'dirt_road': 0.18,
 }
+
+# Optimal speeds for minimal fuel consumption (km/h)
+optimal_speeds = {
+    'highway': 90,
+    'street': 30,
+    'rural': 50,
+    'mountain': 20,
+    'offroad': 15,
+    'expressway': 100,
+    'city_traffic': 20,
+    'dirt_road': 10,
+}
+
+# Penalty coefficient for deviation from optimal speed
+penalty_coefficient = 0.0005
+
+def compute_fuel_rate(speed, road_type):
+    v_opt = optimal_speeds.get(road_type, 40)
+    base_rate = base_fuel_rates.get(road_type, 0.07)
+    penalty = penalty_coefficient * (speed - v_opt) ** 2
+    return base_rate + penalty
 
 def compute_time_and_fuel(distance, road_type):
-    speed = road_speeds.get(road_type, 40)       
-    fuel_rate = road_fuel_rates.get(road_type, 0.08)  
+    speed = road_speeds.get(road_type, 40)
+    fuel_rate = compute_fuel_rate(speed, road_type)
     time = distance / speed
     fuel = distance * fuel_rate
     return time, fuel
@@ -73,7 +106,7 @@ def heuristic(node, goal, metric):
         max_speed = max(road_speeds.values())
         return dist / max_speed
     elif metric == 'fuel':
-        min_fuel_rate = min(road_fuel_rates.values())
+        min_fuel_rate = min(base_fuel_rates.values())
         return dist * min_fuel_rate
 
 def a_star_algorithm(graph, start, goal, metric):
@@ -131,7 +164,7 @@ def get_path(metric, start, goal):
         return jsonify(response)
     else:
         return jsonify({'error': 'No path found'}), 404
-    
+
 @app.route('/get-graph')
 def get_graph():
     nodes = Node.query.all()
@@ -139,15 +172,24 @@ def get_graph():
 
     node_index_map = {node.name: idx for idx, node in enumerate(nodes)}
 
-    nodes_data = [{'x': node.longitude, 'y': node.latitude} for node in nodes]
+    nodes_data = [
+        {
+            'name': node.name,
+            'x': node.longitude,
+            'y': node.latitude
+        }
+        for node in nodes
+    ]
 
     edges_data = []
     for edge in edges:
         if edge.from_node in node_index_map and edge.to_node in node_index_map:
-            edges_data.append([node_index_map[edge.from_node], node_index_map[edge.to_node]])
+            edges_data.append([
+                node_index_map[edge.from_node],
+                node_index_map[edge.to_node]
+            ])
 
     return jsonify({'nodes': nodes_data, 'edges': edges_data})
-
 
 @app.route('/')
 def index():
