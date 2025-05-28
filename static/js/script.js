@@ -26,52 +26,62 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function drawGraph(path = []) {
+  function drawGraph(singlePath = null, pathMap = {}, colorMap = {}) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     edges.forEach(([fromIdx, toIdx]) => {
+      let strokeStyle = "rgba(209, 213, 219, 0.4)";
+      let lineWidth = 1.5;
+      let shadowBlur = 0;
+
+      if (singlePath) {
+        const isInPath =
+          singlePath.includes(fromIdx) &&
+          singlePath.includes(toIdx) &&
+          Math.abs(singlePath.indexOf(fromIdx) - singlePath.indexOf(toIdx)) ===
+            1;
+
+        if (isInPath) {
+          strokeStyle = "#ef4444";
+          lineWidth = 4;
+          shadowBlur = 10;
+        }
+      } else {
+        for (const metric in pathMap) {
+          const path = pathMap[metric];
+          const color = colorMap[metric];
+
+          const isInPath =
+            path.includes(fromIdx) &&
+            path.includes(toIdx) &&
+            Math.abs(path.indexOf(fromIdx) - path.indexOf(toIdx)) === 1;
+
+          if (isInPath) {
+            strokeStyle = color;
+            lineWidth = 3;
+            shadowBlur = 6;
+            break;
+          }
+        }
+      }
+
       const from = nodeCoords[fromIdx];
       const to = nodeCoords[toIdx];
-
-      const isInPath =
-        path.includes(fromIdx) &&
-        path.includes(toIdx) &&
-        Math.abs(path.indexOf(fromIdx) - path.indexOf(toIdx)) === 1;
-
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
-
-      if (isInPath) {
-        ctx.strokeStyle = "#ef4444";
-        ctx.lineWidth = 4;
-        ctx.shadowColor = "rgba(239, 68, 68, 0.7)";
-        ctx.shadowBlur = 10;
-      } else {
-        ctx.strokeStyle = "rgba(209, 213, 219, 0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.shadowBlur = 0;
-      }
-
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.shadowColor = strokeStyle;
+      ctx.shadowBlur = shadowBlur;
       ctx.stroke();
     });
 
     nodeCoords.forEach((node, idx) => {
       ctx.beginPath();
-      const radius = path.includes(idx) ? 12 : 10;
-      ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
-
-      if (path.includes(idx)) {
-        ctx.fillStyle = "#3b82f6";
-        ctx.shadowColor = "rgba(59, 130, 246, 0.5)";
-        ctx.shadowBlur = 6;
-      } else {
-        ctx.fillStyle = "#1f2937";
-        ctx.shadowBlur = 0;
-      }
-
+      ctx.arc(node.x, node.y, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = "#1f2937";
       ctx.fill();
-
       ctx.fillStyle = "#ffffff";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
@@ -109,9 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("routeForm").addEventListener("submit", (e) => {
     e.preventDefault();
+
     const start = document.getElementById("start").value;
     const goal = document.getElementById("goal").value;
     const metric = document.getElementById("metric").value;
+    const multiMetric = document.getElementById("multiMetric").checked;
     const resultDiv = document.getElementById("result");
 
     if (start === goal) {
@@ -121,23 +133,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resultDiv.textContent = "Calculating...";
 
-    fetch(`/path/${metric}/${start}/${goal}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          resultDiv.textContent = `Error: ${data.error}`;
-          drawGraph();
-        } else {
-          resultDiv.innerHTML =
-            `<strong>Path:</strong> ${data.path.join(" → ")}<br>` +
-            `<strong>Distance:</strong> ${data.distance}<br>` +
-            `<strong>Time:</strong> ${data.time}<br>` +
-            `<strong>Fuel:</strong> ${data.fuel}`;
+    const metrics = multiMetric ? ["distance", "time", "fuel"] : [metric];
+    const colors = {
+      distance: "#ef4444",
+      time: "#10b981",
+      fuel: "#3b82f6",
+    };
 
-          const pathIndices = data.path.map((name) =>
-            nodes.findIndex((n) => n.name === name)
-          );
-          drawGraph(pathIndices);
+    const pathResults = {};
+    const pathIndicesMap = {};
+
+    Promise.all(
+      metrics.map((m) =>
+        fetch(`/path/${m}/${start}/${goal}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (!data.error) {
+              pathResults[m] = data;
+              pathIndicesMap[m] = data.path.map((name) =>
+                nodes.findIndex((n) => n.name === name)
+              );
+            }
+          })
+      )
+    )
+      .then(() => {
+        if (Object.keys(pathResults).length === 0) {
+          resultDiv.textContent = "No path found for any metric.";
+          drawGraph();
+          return;
+        }
+
+        resultDiv.innerHTML = "";
+        for (const m of metrics) {
+          if (pathResults[m]) {
+            const d = pathResults[m];
+            resultDiv.innerHTML +=
+              `<strong>${m.toUpperCase()}:</strong><br>` +
+              `Path: ${d.path.join(" → ")}<br>` +
+              `Distance: ${d.distance}<br>` +
+              `Time: ${d.time}<br>` +
+              `Fuel: ${d.fuel}<br><br>`;
+          }
+        }
+
+        if (multiMetric) {
+          drawGraph(null, pathIndicesMap, colors);
+        } else {
+          drawGraph(pathIndicesMap[metric]);
         }
       })
       .catch(() => {
