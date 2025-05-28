@@ -177,10 +177,22 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
+        drawGraph(null, pathIndicesMap, colors);
+
+        const legendDiv = document.getElementById("legend");
         if (multiMetric) {
-          drawGraph(null, pathIndicesMap, colors);
+          legendDiv.innerHTML = "";
+          for (const m of metrics) {
+            if (pathResults[m]) {
+              const colorBox = `<span class="legend-color" style="background-color: ${colors[m]}"></span>`;
+              const label = `<span>${
+                m.charAt(0).toUpperCase() + m.slice(1)
+              }</span>`;
+              legendDiv.innerHTML += `<div class="legend-item">${colorBox}${label}</div>`;
+            }
+          }
         } else {
-          drawGraph(pathIndicesMap[metric]);
+          document.getElementById("legend").innerHTML = "";
         }
       })
       .catch(() => {
